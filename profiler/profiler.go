@@ -30,6 +30,7 @@ type Profiler struct {
 	redirectOnce    sync.Once
 	redirectHandler *redirectHandler
 	subProfilers    []SubProfiler
+	profiling       bool
 }
 
 type redirectHandler struct {
@@ -128,6 +129,13 @@ const (
 )
 
 func (p *Profiler) Start() error {
+	if p.profiling {
+		if err := p.Stop(); err != nil {
+			return err
+		}
+	}
+	p.profiling = true
+
 	if err := p.createBaseDirIfNotExists(); err != nil {
 		return err
 	}
@@ -164,6 +172,7 @@ func (p *Profiler) Stop() error {
 			log.Printf("failed to stop profiler%d: %+v", idx, err)
 		}
 	}
+	p.profiling = false
 	return nil
 }
 
@@ -178,28 +187,23 @@ func (f *fetcher) Fetch(src string, duration, timeout time.Duration) (*profile.P
 type flagSet struct{}
 
 func (s *flagSet) Bool(name string, def bool, usage string) *bool {
-	var v bool
-	return &v
+	return &def
 }
 func (s *flagSet) Int(name string, def int, usage string) *int {
-	var v int
-	return &v
+	return &def
 }
 func (s *flagSet) Float64(name string, def float64, usage string) *float64 {
-	var v float64 = 1
-	return &v
+	return &def
 }
 func (s *flagSet) String(name string, def string, usage string) *string {
 	if name == "http" {
 		v := "0.0.0.0:0"
 		return &v
 	}
-	var v string
-	return &v
+	return &def
 }
 func (s *flagSet) StringList(name string, def string, usage string) *[]*string {
-	var v []*string
-	return &v
+	return &[]*string{&def}
 }
 func (s *flagSet) ExtraUsage() string {
 	return ""
