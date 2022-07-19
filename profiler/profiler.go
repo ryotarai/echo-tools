@@ -90,6 +90,13 @@ func (p *Profiler) ListenAndServe(port uint16) error {
 }
 
 func (p *Profiler) addProfileResult(pprofPath string) error {
+	if stat, err := os.Stat(pprofPath); err != nil {
+		return err
+	} else {
+		if stat.Size() == 0 {
+			return nil
+		}
+	}
 	file, err := os.Open(pprofPath)
 	if err != nil {
 		return fmt.Errorf("failed to open file: %w", err)
